@@ -24,6 +24,7 @@ export default class CrudDemo extends React.Component<ICrudDemoProps, {}> {
       <section className={`${styles.crudDemo}`}>
         <div>
           <h3>Welcome to SharePoint Framework!</h3>
+          <h4>Selected Library: {this.props.selectedLibrary}</h4>
         </div>
       </section>
     );
