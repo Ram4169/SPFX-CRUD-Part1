@@ -85,5 +85,5 @@ jobs:
         run: echo ${{steps.packageDownloadStep.outputs.download-path}}
 
       - name: Run script to install PnP Powershell and deploy app on site using PnP Powershell
-        run: deploymentScript/${{env.DEPLOYMENT_SCRIPT}} -SiteUrl ${{env.SITE_URL}} -packageFilePath ${{steps.packageDownloadStep.outputs.download-path}}\${{env.SPPKG_FILE_NAME}} -appName ${{env.APP_NAME}} -clientId ${{vars.APP_ID}} -clientSecret ${{secrets.CLIENT_SECRET}}
+        run: deploymentScript/${{env.DEPLOYMENT_SCRIPT}} -SiteUrl ${{env.SITE_URL}} -packageFilePath ${{steps.packageDownloadStep.outputs.download-path}}\${{env.SPPKG_FILE_NAME}} -appName ${{env.APP_NAME}} -clientId ${{vars.CLIENT_ID}} -clientSecret ${{secrets.CLIENT_SECRET}}
         shell: powershell
