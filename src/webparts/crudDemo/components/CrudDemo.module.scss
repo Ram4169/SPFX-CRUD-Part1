@@ -2,33 +2,24 @@
 
 .crudDemo {
   overflow: hidden;
-  padding: 1em;
-  color: "[theme:bodyText, default: #323130]";
-  color: var(--bodyText);
-  &.teams {
-    font-family: $ms-font-family-fallbacks;
+
+  &__breadcrumb{
+    font-size: small;
+    font-weight: 700;
+    gap: 10px;
+    display: flex
   }
 }
 
-.welcome {
-  text-align: center;
+.arrowRight{
+  border: solid black;
+  border-width: 0 3px 3px 0;
+  display: inline-block;
+  padding: 3px;
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+  height: 0px;
+    top: 7px;
+    position: relative;
 }
 
-.welcomeImage {
-  width: 100%;
-  max-width: 420px;
-}
-
-.links {
-  a {
-    text-decoration: none;
-    color: "[theme:link, default:#03787c]";
-    color: var(--link); // note: CSS Custom Properties support is limited to modern browsers only
-
-    &:hover {
-      text-decoration: underline;
-      color: "[theme:linkHovered, default: #014446]";
-      color: var(--linkHovered); // note: CSS Custom Properties support is limited to modern browsers only
-    }
-  }
-}

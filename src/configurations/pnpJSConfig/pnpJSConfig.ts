@@ -1,12 +1,14 @@
-import { WebPartContext } from "@microsoft/sp-webpart-base";
+import { WebPartContext } from '@microsoft/sp-webpart-base';
 
 // import pnp, pnp logging system, and any other selective imports needed
-import { spfi, SPFI, SPFx } from "@pnp/sp";
+import { spfi, SPFI, SPFx } from '@pnp/sp';
 
-import "@pnp/sp/webs";
-import "@pnp/sp/lists";
-import "@pnp/sp/items";
-import "@pnp/sp/batching";
+import '@pnp/sp/webs';
+import '@pnp/sp/lists';
+import '@pnp/sp/items';
+import '@pnp/sp/folders';
+import '@pnp/sp/batching';
+import '@pnp/sp/presets/all';
 
 let _sp: SPFI;
 
