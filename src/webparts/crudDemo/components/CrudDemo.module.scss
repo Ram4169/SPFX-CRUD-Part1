@@ -11,6 +11,10 @@
   }
 }
 
+.crudDemo__breadcrumb span{
+  cursor: pointer !important;
+}
+
 .arrowRight{
   border: solid black;
   border-width: 0 3px 3px 0;
@@ -21,5 +25,9 @@
   height: 0px;
     top: 7px;
     position: relative;
+}
+
+.tableContainer td{
+  cursor: pointer;
 }
 

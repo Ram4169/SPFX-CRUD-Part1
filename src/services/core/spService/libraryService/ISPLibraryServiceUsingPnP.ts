@@ -11,7 +11,17 @@ export interface ISPLibraryService {
    */
   getAllItems(libraryName: string): Promise<any[]>;
 
-  getFolderByServerRelativePath(relativePath: string): Promise<any[]>;
+  getFoldersUsingRelativePath(relativePath: string): Promise<any[]>;
 
-  getFilesByServerRelativePath(relativePath: string): Promise<any[]>;
+  getFolderByServerRelativePathFromDifferentWeb(
+    tenantUrl: string,
+    relativePath: string
+  ): Promise<any[]>;
+
+  getFilesUsingRelativePath(relativePath: string): Promise<any[]>;
+
+  getFilesByServerRelativePathFromDifferentWeb(
+    tenantUrl: string,
+    relativePath: string
+  ): Promise<any[]>;
 }

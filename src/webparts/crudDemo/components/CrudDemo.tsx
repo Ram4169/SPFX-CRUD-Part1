@@ -49,15 +49,38 @@ export default class CrudDemo extends React.Component<
         },
       ],
     });
-    this._getSPLibraryItems(rootFolderPath);
+    this._getSPLibraryItems(rootFolderPath, false);
   }
 
-  public _getSPLibraryItems = async (folderPath: string) => {
-    const _getFolders =
-      await this._spLibraryService.getFolderByServerRelativePath(folderPath);
-    const _getFiles = await this._spLibraryService.getFilesByServerRelativePath(
-      folderPath
-    );
+  public _getSPLibraryItems = async (
+    folderPath: string,
+    isDifferentWeb: boolean
+  ) => {
+    let _getFolders: any[] = [],
+      _getFiles: any[] = [];
+    if (isDifferentWeb) {
+      let siteUrl = this.props.context.pageContext.site.absoluteUrl.substring(
+        0,
+        this.props.context.pageContext.site.absoluteUrl.indexOf('site')
+      );
+      _getFolders =
+        await this._spLibraryService.getFolderByServerRelativePathFromDifferentWeb(
+          siteUrl,
+          folderPath
+        );
+      _getFiles =
+        await this._spLibraryService.getFilesByServerRelativePathFromDifferentWeb(
+          siteUrl,
+          folderPath
+        );
+    } else {
+      _getFolders = await this._spLibraryService.getFoldersUsingRelativePath(
+        folderPath
+      );
+      _getFiles = await this._spLibraryService.getFilesUsingRelativePath(
+        folderPath
+      );
+    }
 
     Promise.all([_getFolders, _getFiles]).then((results) => {
       const [folderResult, fileResult] = results;
@@ -70,8 +93,9 @@ export default class CrudDemo extends React.Component<
             ...this.state.libraryItems,
             {
               Name: r.Name,
-              ServerRelativeUrl: r.ServerRelativeUrl,
+              ServerRelativeUrl: decodeURIComponent(r.ServerRelativeUrl),
               Folder: true,
+              SourceUrl: '',
             },
           ],
         });
@@ -82,8 +106,12 @@ export default class CrudDemo extends React.Component<
             ...this.state.libraryItems,
             {
               Name: r.Name,
-              ServerRelativeUrl: r.ServerRelativeUrl,
-              Folder: false,
+              ServerRelativeUrl: decodeURIComponent(r.ServerRelativeUrl),
+              Folder: r.Name.indexOf('.url') > -1 ? true : false,
+              SourceUrl:
+                r.Name.indexOf('.url') > -1
+                  ? decodeURIComponent(r.ListItemAllFields.SourceUrl)
+                  : '',
             },
           ],
         });
@@ -111,7 +139,34 @@ export default class CrudDemo extends React.Component<
       }
     );
 
-    this._getSPLibraryItems(relativePath);
+    this._getSPLibraryItems(relativePath, false);
+  };
+
+  public handleClickOnFolderForUrl = (
+    relativePath: string,
+    FolderName: string
+  ) => {
+    console.log(relativePath);
+    console.log(FolderName);
+    this.setState(
+      {
+        navigationLevel: this.state.navigationLevel + 1,
+      },
+      () => {
+        this.setState({
+          libraryItems: [],
+          breadcrumbItems: [
+            ...this.state.breadcrumbItems,
+            {
+              index: this.state.navigationLevel,
+              Level: FolderName,
+              RelativePath: relativePath,
+            },
+          ],
+        });
+      }
+    );
+    this._getSPLibraryItems(relativePath, true);
   };
 
   public handleBreadcrumbClick = (
@@ -125,7 +180,7 @@ export default class CrudDemo extends React.Component<
       ),
       libraryItems: [],
     });
-    this._getSPLibraryItems(RelativePath);
+    this._getSPLibraryItems(RelativePath, false);
   };
 
   public render(): React.ReactElement<ICrudDemoProps> {
@@ -159,7 +214,7 @@ export default class CrudDemo extends React.Component<
               );
             })}
           </div>
-          <div id="tableContainer">
+          <div className={styles.tableContainer}>
             <table>
               <thead>
                 <tr>
@@ -174,16 +229,29 @@ export default class CrudDemo extends React.Component<
                     <tr>
                       <td>
                         {element.Folder ? (
-                          <a
-                            onClick={() =>
-                              this.handleClick(
-                                element.ServerRelativeUrl,
-                                element.Name
-                              )
-                            }
-                          >
-                            {element.Name}
-                          </a>
+                          element.Name.indexOf('.url') > -1 ? (
+                            <a
+                              onClick={() =>
+                                this.handleClickOnFolderForUrl(
+                                  element.SourceUrl,
+                                  element.Name.split('.')[0]
+                                )
+                              }
+                            >
+                              {element.Name.split('.')[0]}
+                            </a>
+                          ) : (
+                            <a
+                              onClick={() =>
+                                this.handleClick(
+                                  element.ServerRelativeUrl,
+                                  element.Name
+                                )
+                              }
+                            >
+                              {element.Name}
+                            </a>
+                          )
                         ) : (
                           element.Name
                         )}
