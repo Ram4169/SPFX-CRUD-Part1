@@ -46,7 +46,7 @@ export default class CrudDemoWebPart extends BaseClientSideWebPart<ICrudDemoWebP
       {
         description: this.properties.description,
         context: this.context,
-        selectedLibrary: this.properties.splibraryoption,
+        selectedLibrary: Number(this.properties.splibraryoption),
       }
     );
 

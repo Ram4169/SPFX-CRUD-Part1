@@ -12,7 +12,8 @@
     "test": "gulp test"
   },
   "dependencies": {
-    "@fluentui/react": "^8.106.4",
+    "@fluentui/react": "^8.122.9",
+    "@fluentui/react-components": "^9.58.2",
     "@microsoft/sp-component-base": "1.18.2",
     "@microsoft/sp-core-library": "1.18.2",
     "@microsoft/sp-lodash-subset": "1.18.2",
@@ -31,6 +32,7 @@
     "@microsoft/sp-build-web": "1.18.2",
     "@microsoft/sp-module-interfaces": "1.18.2",
     "@rushstack/eslint-config": "2.5.1",
+    "@types/jquery": "^3.5.32",
     "@types/react": "17.0.45",
     "@types/react-dom": "17.0.17",
     "@types/webpack-env": "~1.15.2",

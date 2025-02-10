@@ -24,4 +24,6 @@ export interface ISPLibraryService {
     tenantUrl: string,
     relativePath: string
   ): Promise<any[]>;
+
+  getFilesAndFoldersInFolder(folderRelativePath: string): Promise<any>;
 }

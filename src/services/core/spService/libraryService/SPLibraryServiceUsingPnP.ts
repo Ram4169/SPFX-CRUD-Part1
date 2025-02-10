@@ -4,6 +4,7 @@ import { WebPartContext } from '@microsoft/sp-webpart-base';
 import { getSP } from '../../../../configurations/pnpJSConfig/pnpJSConfig';
 import { AssignFrom } from '@pnp/core';
 import { Web } from '@pnp/sp/webs';
+import { folderFromServerRelativePath } from '@pnp/sp/folders';
 
 export class SPLibraryService implements ISPLibraryService {
   private _sp: SPFI;
@@ -37,7 +38,7 @@ export class SPLibraryService implements ISPLibraryService {
     let folders = this._sp.web
       .getFolderByServerRelativePath(relativePath)
       .folders.filter('ListItemAllFields/Id ne null')
-      .expand('ListItemAllFields')
+      .expand('ListItemAllFields/FieldValuesAsText')
       .select('*')();
 
     return folders;
@@ -90,5 +91,24 @@ export class SPLibraryService implements ISPLibraryService {
       .select('*')();
 
     return files;
+  }
+
+  public async getFilesAndFoldersInFolder(
+    folderRelativePath: string
+  ): Promise<any> {
+    const folder = folderFromServerRelativePath(
+      this._sp.web,
+      folderRelativePath
+    );
+    const files = await folder.files
+      .filter('ListItemAllFields/Id ne null')
+      .expand('ListItemAllFields')
+      .select('*')();
+    const folders = await folder.folders
+      .filter('ListItemAllFields/Id ne null')
+      .expand('ListItemAllFields')
+      .select('*')();
+
+    return [...folders, ...files];
   }
 }

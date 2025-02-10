@@ -5,38 +5,54 @@ import { ISPListService } from '../../../services/core/spService/listServiceUsin
 import { SPListService } from '../../../services/core/spService/listServiceUsingPnP/SPListServicePnP';
 import { ISPLibraryService } from '../../../services/core/spService/libraryService/ISPLibraryServiceUsingPnP';
 import { SPLibraryService } from '../../../services/core/spService/libraryService/SPLibraryServiceUsingPnP';
+import {
+  Button,
+  FluentProvider,
+  webLightTheme,
+} from '@fluentui/react-components';
+import { LibraryOption } from '../../../common/LibraryOption';
+import IEmployeeDetails from '../../../models/IEmplyeeDetails';
+import DetailsListBasic from '../customComponents/SimpleDetailsList';
+import { ISPListServiceSPHTTP } from '../../../services/core/spService/listServiceUsingSPHttp/ISPListServiceSPHTTP';
+import { SPListServiceSPHTTP } from '../../../services/core/spService/listServiceUsingSPHttp/SPListServiceSPHTTP';
+import GraphConsumer from '../customComponents/GraphConsumer';
+import * as $ from 'jquery';
 
 export interface ICrudDemoStates {
   libraryItems: any[];
   breadcrumbItems: any[];
   navigationLevel: number;
+  listItems: IEmployeeDetails[];
 }
 
 export default class CrudDemo extends React.Component<
   ICrudDemoProps,
   ICrudDemoStates
 > {
-  private _spListService: ISPListService;
+  //private _spListService: ISPListService;
   private _spLibraryService: ISPLibraryService;
+  private _allItems: IEmployeeDetails[];
   constructor(props: ICrudDemoProps, states: ICrudDemoStates) {
     super(props);
 
-    this._spListService = new SPListService(this.props.context);
+    //this._spListService = new SPListService(this.props.context);
     this._spLibraryService = new SPLibraryService(this.props.context);
+    this._allItems = [];
 
     this.state = {
       libraryItems: [],
       breadcrumbItems: [],
       navigationLevel: 0,
+      listItems: this._allItems,
     };
   }
 
   public componentDidMount(): void {
-    const result = this._spListService.getListItems('EmployeeData');
-    result.then((r) => {
-      console.log(r);
-    });
-
+    //const result = this._spListService.getListItems('EmployeeData');
+    // result.then((r) => {
+    //   console.log(r);
+    // });
+    alert($('h4')[0].innerHTML);
     const rootFolderPath =
       this.props.context.pageContext.web.serverRelativeUrl + '/MyDocument';
 
@@ -263,7 +279,72 @@ export default class CrudDemo extends React.Component<
             </table>
           </div>
         </div>
+
+        <div className={styles.CRUDOperationContainer}>
+          <h3>CRUD Operation: {LibraryOption[this.props.selectedLibrary]}</h3>
+
+          <FluentProvider theme={webLightTheme}>
+            <div className={styles.formContainer}></div>
+            <div className={styles.CRUDActionButtons}>
+              <Button onClick={this._onLoadButtonClick}>Load Data</Button>
+              <Button>Create</Button>
+              <Button>Update</Button>
+              <Button>Delete</Button>
+            </div>
+            <div className={styles.tableContainer}>
+              <DetailsListBasic items={this.state.listItems} />
+            </div>
+          </FluentProvider>
+        </div>
+        <br />
+        <FluentProvider>
+          <div>
+            <GraphConsumer
+              clientMode={this.props.selectedLibrary}
+              context={this.props.context}
+            />
+          </div>
+        </FluentProvider>
       </section>
     );
   }
+
+  private _onLoadButtonClick = () => {
+    this._loadListData();
+  };
+
+  public _loadListData = async () => {
+    if (this.props.selectedLibrary === LibraryOption['SP Service Using PnP']) {
+      const _spListService: ISPListService = new SPListService(
+        this.props.context
+      );
+      const result: IEmployeeDetails[] = await _spListService.getListItems(
+        'EmployeeData'
+      );
+      this.setState({ listItems: result });
+    } else if (
+      this.props.selectedLibrary === LibraryOption['SP Service Using SPHttp']
+    ) {
+      const _spListService: ISPListServiceSPHTTP = new SPListServiceSPHTTP(
+        this.props.context
+      );
+      const result: IEmployeeDetails[] = await _spListService.getListItems(
+        'EmployeeData'
+      );
+      this.setState({ listItems: result });
+    } else if (
+      this.props.selectedLibrary ===
+      LibraryOption['SP Service Using MSGraph Client']
+    ) {
+      const _spListService: ISPListServiceSPHTTP = new SPListServiceSPHTTP(
+        this.props.context
+      );
+      const result: IEmployeeDetails[] = await _spListService.getListItems(
+        'EmployeeData'
+      );
+      console.log(result);
+      this.setState({ listItems: result });
+    } else {
+    }
+  };
 }
