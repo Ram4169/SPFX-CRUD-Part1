@@ -10,7 +10,11 @@
     "build": "gulp bundle",
     "clean": "gulp clean",
     "test": "gulp test",
-    "serve": "fast-serve"
+    "serve": "fast-serve",
+    "build-package-ship": "gulp bundle --ship && gulp package-solution --ship",
+    "build-with-ship": "npm run bundle",
+    "bundle": "gulp bundle --ship",
+    "package-with-ship": "gulp package-solution --ship"
   },
   "dependencies": {
     "@fluentui/react": "^8.122.9",
