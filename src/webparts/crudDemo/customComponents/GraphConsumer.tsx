@@ -209,7 +209,7 @@ export default class GraphConsumer extends React.Component<
               this.state.searchFor
             )}') or (displayName eq '${escape(this.state.searchFor)}')`
           )
-          .get((err, res) => {
+          .get((err: any, res: any) => {
             if (err) {
               console.error(err);
               return;

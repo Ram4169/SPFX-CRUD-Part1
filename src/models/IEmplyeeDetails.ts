@@ -3,5 +3,5 @@ export default interface IEmployeeDetails {
   FirstName: string;
   LastName: string;
   Gender: string;
-  Salary: number;
+  Salary: string;
 }

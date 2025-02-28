@@ -6,10 +6,16 @@ import {
   DetailsListLayoutMode,
   Selection,
   IColumn,
+  SelectionMode,
+  DetailsRow,
+  CheckboxVisibility,
+  IDetailsListStyleProps,
+  IDetailsListStyles,
 } from '@fluentui/react/lib/DetailsList';
-import { MarqueeSelection } from '@fluentui/react/lib/MarqueeSelection';
+//import { MarqueeSelection } from '@fluentui/react/lib/MarqueeSelection';
 import { mergeStyles } from '@fluentui/react/lib/Styling';
 import IEmployeeDetails from '../../../models/IEmplyeeDetails';
+import { IStyleFunctionOrObject } from '@fluentui/react';
 
 const exampleChildClass = mergeStyles({
   display: 'block',
@@ -17,9 +23,22 @@ const exampleChildClass = mergeStyles({
   width: '50%',
 });
 
-const tableStyles = mergeStyles({
-  display: 'flex',
-});
+const tableStyles: IStyleFunctionOrObject<
+  IDetailsListStyleProps,
+  IDetailsListStyles
+> = {
+  root: {
+    display: 'flex',
+  },
+  contentWrapper: {
+    root: {
+      checkCell: {
+        display: 'flex',
+      },
+    },
+  },
+  headerWrapper: {},
+};
 
 //Throwing error
 // const textFieldStyles: Partial<ITextFieldStyles> = {
@@ -28,6 +47,7 @@ const tableStyles = mergeStyles({
 
 export interface IDetailsListBasicProps {
   items: IEmployeeDetails[];
+  selectedItem: (item: number) => void;
 }
 
 export interface IDetailsListBasicState {
@@ -118,22 +138,42 @@ export default class DetailsListBasic extends React.Component<
         <Announced
           message={`Number of items after filter applied: ${listItems.length}.`}
         />
-        <MarqueeSelection selection={this._selection}>
-          <DetailsList
-            items={listItems}
-            columns={this._columns}
-            setKey="set"
-            layoutMode={DetailsListLayoutMode.justified}
-            selection={this._selection}
-            selectionPreservedOnEmptyClick={true}
-            ariaLabelForSelectionColumn="Toggle selection"
-            ariaLabelForSelectAllCheckbox="Toggle selection for all items"
-            checkButtonAriaLabel="select row"
-            className={tableStyles}
-          />
-        </MarqueeSelection>
+        <DetailsList
+          items={listItems}
+          columns={this._columns}
+          setKey="set"
+          layoutMode={DetailsListLayoutMode.justified}
+          selection={this._selection}
+          selectionMode={SelectionMode.single}
+          selectionPreservedOnEmptyClick={true}
+          ariaLabelForSelectionColumn="Toggle selection"
+          ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+          checkButtonAriaLabel="select row"
+          styles={tableStyles}
+          onRenderRow={(props: any) => (
+            <DetailsRow
+              {...props}
+              onRenderCheck={() => this._onRenderCheckbox(props, props.item)}
+              data-selection-disabled={true}
+              onClick={(ev?: any) => {
+                alert(props.item.Id);
+              }}
+            />
+          )}
+          //onRenderCheckbox={this._onRenderCheckbox}
+          checkboxVisibility={CheckboxVisibility.always}
+          onItemInvoked={this._onItemInvoked}
+        />
       </div>
     );
+  }
+
+  private _onItemInvoked = (item: IEmployeeDetails): void => {
+    alert(`Item invoked: ${item.Id}`);
+  };
+
+  private _onRenderCheckbox(props: any, item: IEmployeeDetails) {
+    return <input type="checkbox" {...props} />;
   }
 
   private _getSelectionDetails(): string {
@@ -141,13 +181,19 @@ export default class DetailsListBasic extends React.Component<
 
     switch (selectionCount) {
       case 0:
+        this.props.selectedItem(0);
         return 'No items selected';
       case 1:
+        //Send selected item id to parent component
+        this.props.selectedItem(
+          (this._selection.getSelection()[0] as IEmployeeDetails).Id
+        );
         return (
           '1 item selected: ' +
           (this._selection.getSelection()[0] as IEmployeeDetails).Id
         );
       default:
+        this.props.selectedItem(-1);
         return `${selectionCount} items selected`;
     }
   }

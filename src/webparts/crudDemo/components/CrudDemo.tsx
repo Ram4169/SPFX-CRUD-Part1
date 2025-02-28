@@ -17,12 +17,22 @@ import { ISPListServiceSPHTTP } from '../../../services/core/spService/listServi
 import { SPListServiceSPHTTP } from '../../../services/core/spService/listServiceUsingSPHttp/SPListServiceSPHTTP';
 import GraphConsumer from '../customComponents/GraphConsumer';
 import * as $ from 'jquery';
+import CustomFormModal from '../customComponents/CustomFormModal';
+import Modal from '../../../controls/ModalPopUp';
+import Loader from '../../../controls/SpinOverlay';
 
 export interface ICrudDemoStates {
   libraryItems: any[];
   breadcrumbItems: any[];
   navigationLevel: number;
   listItems: IEmployeeDetails[];
+  listItem: IEmployeeDetails;
+  isModalOpen: boolean;
+  showAlertModal: boolean;
+  message: string;
+  selectedItem: number;
+  isUpdate: boolean;
+  enableLoader: boolean;
 }
 
 export default class CrudDemo extends React.Component<
@@ -44,6 +54,19 @@ export default class CrudDemo extends React.Component<
       breadcrumbItems: [],
       navigationLevel: 0,
       listItems: this._allItems,
+      listItem: {
+        Id: 0,
+        FirstName: '',
+        LastName: '',
+        Gender: '',
+        Salary: '',
+      },
+      isModalOpen: false,
+      showAlertModal: false,
+      message: '',
+      selectedItem: 0,
+      isUpdate: false,
+      enableLoader: false,
     };
   }
 
@@ -52,7 +75,7 @@ export default class CrudDemo extends React.Component<
     // result.then((r) => {
     //   console.log(r);
     // });
-    alert($('h4')[0].innerHTML);
+    console.log($('h4')[0].innerHTML);
     const rootFolderPath =
       this.props.context.pageContext.web.serverRelativeUrl + '/MyDocument';
 
@@ -103,34 +126,30 @@ export default class CrudDemo extends React.Component<
 
       console.log(folderResult);
       console.log(fileResult);
+
+      let libObject = new Set();
       folderResult.forEach((r) => {
-        this.setState({
-          libraryItems: [
-            ...this.state.libraryItems,
-            {
-              Name: r.Name,
-              ServerRelativeUrl: decodeURIComponent(r.ServerRelativeUrl),
-              Folder: true,
-              SourceUrl: '',
-            },
-          ],
+        libObject.add({
+          Name: r.Name,
+          ServerRelativeUrl: decodeURIComponent(r.ServerRelativeUrl),
+          Folder: true,
+          SourceUrl: '',
         });
       });
       fileResult.forEach((r) => {
-        this.setState({
-          libraryItems: [
-            ...this.state.libraryItems,
-            {
-              Name: r.Name,
-              ServerRelativeUrl: decodeURIComponent(r.ServerRelativeUrl),
-              Folder: r.Name.indexOf('.url') > -1 ? true : false,
-              SourceUrl:
-                r.Name.indexOf('.url') > -1
-                  ? decodeURIComponent(r.ListItemAllFields.SourceUrl)
-                  : '',
-            },
-          ],
+        libObject.add({
+          Name: r.Name,
+          ServerRelativeUrl: decodeURIComponent(r.ServerRelativeUrl),
+          Folder: r.Name.indexOf('.url') > -1 ? true : false,
+          SourceUrl:
+            r.Name.indexOf('.url') > -1
+              ? decodeURIComponent(r.ListItemAllFields.SourceUrl)
+              : '',
         });
+      });
+
+      this.setState({
+        libraryItems: [...libObject],
       });
     });
   };
@@ -202,6 +221,7 @@ export default class CrudDemo extends React.Component<
   public render(): React.ReactElement<ICrudDemoProps> {
     return (
       <section className={styles.crudDemo}>
+        {this.state.enableLoader ? <Loader /> : null}
         <div>
           <h3>Welcome to SharePoint Framework!</h3>
           <h4>Selected Library: {this.props.selectedLibrary}</h4>
@@ -287,12 +307,15 @@ export default class CrudDemo extends React.Component<
             <div className={styles.formContainer}></div>
             <div className={styles.CRUDActionButtons}>
               <Button onClick={this._onLoadButtonClick}>Load Data</Button>
-              <Button>Create</Button>
-              <Button>Update</Button>
+              <Button onClick={this._onCreateButtonClick}>Create</Button>
+              <Button onClick={this._onUpdateButtonClick}>Update</Button>
               <Button>Delete</Button>
             </div>
             <div className={styles.tableContainer}>
-              <DetailsListBasic items={this.state.listItems} />
+              <DetailsListBasic
+                items={this.state.listItems}
+                selectedItem={this._getSelectionDetails}
+              />
             </div>
           </FluentProvider>
         </div>
@@ -305,12 +328,32 @@ export default class CrudDemo extends React.Component<
             />
           </div>
         </FluentProvider>
+
+        <CustomFormModal
+          isOpen={this.state.isModalOpen}
+          onClose={this._onCloseModal}
+          onSave={this._onSubmitModal}
+          onUpdate={this._onUpdateModal}
+          item={this.state.listItem}
+          isUpdate={this.state.isUpdate}
+        />
+
+        {this.state.showAlertModal && (
+          <Modal
+            message={this.state.message}
+            onClose={() => this.setState({ showAlertModal: false })}
+          />
+        )}
       </section>
     );
   }
 
   private _onLoadButtonClick = () => {
-    this._loadListData();
+    this.setState({ enableLoader: true }, () => {
+      setTimeout(() => {
+        this._loadListData();
+      }, 1000);
+    });
   };
 
   public _loadListData = async () => {
@@ -321,7 +364,7 @@ export default class CrudDemo extends React.Component<
       const result: IEmployeeDetails[] = await _spListService.getListItems(
         'EmployeeData'
       );
-      this.setState({ listItems: result });
+      this.setState({ listItems: result, enableLoader: false });
     } else if (
       this.props.selectedLibrary === LibraryOption['SP Service Using SPHttp']
     ) {
@@ -346,5 +389,171 @@ export default class CrudDemo extends React.Component<
       this.setState({ listItems: result });
     } else {
     }
+  };
+
+  private _onCreateButtonClick = () => {
+    this.setState({ isModalOpen: true, isUpdate: false });
+  };
+
+  private _onCloseModal = () => {
+    this.setState({ isModalOpen: false });
+  };
+
+  //This method gets called when form submitted with details
+  private _onSubmitModal = async (formData: IEmployeeDetails) => {
+    if (this.props.selectedLibrary === LibraryOption['SP Service Using PnP']) {
+      const _spListService: ISPListService = new SPListService(
+        this.props.context
+      );
+      const result = await _spListService.createListItem(
+        'EmployeeData',
+        formData
+      );
+
+      if (result) {
+        this.setState({
+          showAlertModal: true,
+          message: 'The record saved successfully!',
+        });
+      }
+    } else if (
+      this.props.selectedLibrary === LibraryOption['SP Service Using SPHttp']
+    ) {
+      const _spListService: ISPListServiceSPHTTP = new SPListServiceSPHTTP(
+        this.props.context
+      );
+      const result: IEmployeeDetails[] = await _spListService.getListItems(
+        'EmployeeData'
+      );
+      this.setState({ listItems: result });
+    } else if (
+      this.props.selectedLibrary ===
+      LibraryOption['SP Service Using MSGraph Client']
+    ) {
+      const _spListService: ISPListServiceSPHTTP = new SPListServiceSPHTTP(
+        this.props.context
+      );
+      const result: IEmployeeDetails[] = await _spListService.getListItems(
+        'EmployeeData'
+      );
+      console.log(result);
+      this.setState({ listItems: result });
+    } else {
+    }
+  };
+
+  private _onUpdateModal = async (formData: IEmployeeDetails) => {
+    this.setState({ enableLoader: true });
+
+    if (this.props.selectedLibrary === LibraryOption['SP Service Using PnP']) {
+      const _spListService: ISPListService = new SPListService(
+        this.props.context
+      );
+      const result = await _spListService.updateListItem(
+        'EmployeeData',
+        this.state.selectedItem,
+        {
+          Id: formData.Id,
+          FirstName: formData.FirstName,
+          LastName: formData.LastName,
+          Gender: formData.Gender,
+          Salary: formData.Salary,
+        }
+      );
+
+      if (result) {
+        this.setState({
+          showAlertModal: true,
+          message: 'The record updated successfully!',
+          enableLoader: false,
+        });
+      }
+    } else if (
+      this.props.selectedLibrary === LibraryOption['SP Service Using SPHttp']
+    ) {
+      const _spListService: ISPListServiceSPHTTP = new SPListServiceSPHTTP(
+        this.props.context
+      );
+      const result: IEmployeeDetails[] = await _spListService.getListItems(
+        'EmployeeData'
+      );
+      this.setState({ listItems: result });
+    } else if (
+      this.props.selectedLibrary ===
+      LibraryOption['SP Service Using MSGraph Client']
+    ) {
+      const _spListService: ISPListServiceSPHTTP = new SPListServiceSPHTTP(
+        this.props.context
+      );
+      const result: IEmployeeDetails[] = await _spListService.getListItems(
+        'EmployeeData'
+      );
+      console.log(result);
+      this.setState({ listItems: result });
+    } else {
+    }
+  };
+
+  private _onUpdateButtonClick = async () => {
+    if (this.state.selectedItem > 0) {
+      if (
+        this.props.selectedLibrary === LibraryOption['SP Service Using PnP']
+      ) {
+        const _spListService: ISPListService = new SPListService(
+          this.props.context
+        );
+        const result = await _spListService.getListItemById(
+          'EmployeeData',
+          '',
+          '',
+          this.state.selectedItem
+        );
+
+        if (result) {
+          this.setState({
+            isModalOpen: true,
+            isUpdate: true,
+            listItem: result,
+          });
+        }
+      } else if (
+        this.props.selectedLibrary === LibraryOption['SP Service Using SPHttp']
+      ) {
+        const _spListService: ISPListServiceSPHTTP = new SPListServiceSPHTTP(
+          this.props.context
+        );
+        const result: IEmployeeDetails[] = await _spListService.getListItems(
+          'EmployeeData'
+        );
+        this.setState({ listItems: result });
+      } else if (
+        this.props.selectedLibrary ===
+        LibraryOption['SP Service Using MSGraph Client']
+      ) {
+        const _spListService: ISPListServiceSPHTTP = new SPListServiceSPHTTP(
+          this.props.context
+        );
+        const result: IEmployeeDetails[] = await _spListService.getListItems(
+          'EmployeeData'
+        );
+        console.log(result);
+        this.setState({ listItems: result });
+      } else {
+      }
+    } else if (this.state.selectedItem < 0) {
+      this.setState({
+        showAlertModal: true,
+        message: 'Please select only a single record from table to update!',
+      });
+    } else {
+      this.setState({
+        showAlertModal: true,
+        message: 'Please select a record from table to update!',
+      });
+    }
+  };
+
+  private _getSelectionDetails = (item: number) => {
+    this.setState({ selectedItem: item });
   };
 }
